@@ -10,7 +10,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
              prism:ViewModelLocator.AutoWireViewModel="True">
-    
+
     <UserControl.Resources>
         <dataConverter:ConnectStateConverter x:Key="StateConver"></dataConverter:ConnectStateConverter>
     </UserControl.Resources>
@@ -29,13 +29,13 @@
                    >
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="SelectionChanged">
-                        <i:InvokeCommandAction Command="{Binding NewLayoutCmd}" />
+                        <i:InvokeCommandAction Command="{Binding IOTypeChangedCommand}" />
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
             </ComboBox>
         </StackPanel>
-        <!--<TextBlock Text="{Binding IpAddress}"></TextBlock>-->
-        <!--<ContentControl Content="{Binding Path= InstrumnetView}" Grid.Row="1" ></ContentControl>-->
+
+        <ContentControl Content="{Binding ConnectHelperView}" Grid.Row="1" ></ContentControl>
         <GroupBox Header="控制连接" Grid.Row="2">
             <Grid>
                 <Grid.RowDefinitions>
@@ -48,14 +48,11 @@
                     <ColumnDefinition Width="auto"/>
                     <ColumnDefinition Width="auto"/>
                 </Grid.ColumnDefinitions>
-                <Button Content="连接" Grid.Row="0" Grid.Column="0" Command="{Binding Path=ConnectCmd}" Width="100"></Button>
-                <Label Grid.Row="0" Grid.Column="1" Content="{Binding Path=Instrument.InstrumentAddress}" Foreground="{Binding Path=ColorState}" />
+                <Button Content="连接" Grid.Row="0" Grid.Column="0" Command="{Binding Path=ConnectCommand}" Width="100"></Button>
+                <Label Grid.Row="0" Grid.Column="1" Content="{Binding Path=Address}" Foreground="{Binding Path=ColorState}" VerticalContentAlignment="Center"/>
 
-                <Label Grid.Row="0" Grid.Column="2" Content="{Binding Path=IsConneted}" Foreground="{Binding Path=ColorState}" />
-                <Image Grid.Row="0" Grid.Column="3" Height="20" Source="{Binding Path=Instrument.ConnectState,Converter={StaticResource StateConver},Mode=OneWay}"/>
-
-                <!--<Button Content="识别设备" Grid.Row="1" Grid.Column="0" Command="{Binding Path=IdentifyCmd}" Visibility="Collapsed"></Button>
-             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Path=InstrumentIndo}" Visibility="Collapsed"></TextBlock>-->
+                <Label Grid.Row="0" Grid.Column="2" Content="{Binding Path=IsConnected}" Foreground="{Binding Path=ColorState}" VerticalContentAlignment="Center"/>
+                <Image Grid.Row="0" Grid.Column="3" Height="20" Source="{Binding Path=ConnectState,Converter={StaticResource StateConver},Mode=OneWay}"/>
             </Grid>
         </GroupBox>
     </Grid>

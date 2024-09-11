@@ -19,9 +19,9 @@
                 <ContentControl prism:RegionManager.RegionName="{x:Static region:RegionNames.ControlDemoContentRegion}" Margin="5"/>
             </TabItem>
 
-            <TabItem Header="设备2">
+            <!--<TabItem Header="设备2">
                 <ContentControl prism:RegionManager.RegionName="{x:Static region:RegionNames.OtherDemoContentRegion}" Margin="5"/>
-            </TabItem>
+            </TabItem>-->
         </TabControl>
     </Grid>
 </Window>

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Collections.Concurrent;
 using System.Windows.Interop;
+using Khsw.Instrument.Demo.Commons.Enums;
 
 namespace Khsw.Instrument.Demo.Models.Base
 {

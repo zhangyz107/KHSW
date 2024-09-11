@@ -44,7 +44,7 @@ namespace Khsw.Instrument.Demo.ViewModels
         private void InitRegion()
         {
             _regionManager.RegisterViewWithRegion(RegionNames.ControlDemoContentRegion, typeof(ControlDemoView));
-            _regionManager.RegisterViewWithRegion(RegionNames.OtherDemoContentRegion, typeof(OtherDemoView));
+            //_regionManager.RegisterViewWithRegion(RegionNames.OtherDemoContentRegion, typeof(OtherDemoView));
 
 
         }

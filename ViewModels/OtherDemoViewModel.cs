@@ -13,7 +13,6 @@ namespace Khsw.Instrument.Demo.ViewModels
         private string _ipAddress = "192.168.1.2";
         #endregion
 
-
         #region Properties
 
         public string IpAddress

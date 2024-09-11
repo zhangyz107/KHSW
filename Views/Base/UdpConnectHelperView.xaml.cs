@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Khsw.Instrument.Demo.Models.Base;
+using Khsw.Instrument.Demo.ViewModels.Base;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +25,15 @@ namespace Khsw.Instrument.Demo.Views.Base
         public UdpConnectHelperView()
         {
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// 设置设备信息
+        /// </summary>
+        public void SetInstrument(InstrumentBase instrument)
+        {
+            var viewModel = DataContext as UdpConnectHelperViewModel;
+            viewModel?.SetInstrument(instrument);
         }
     }
 }

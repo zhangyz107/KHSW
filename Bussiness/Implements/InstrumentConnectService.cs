@@ -71,7 +71,6 @@ namespace Khsw.Instrument.Demo.Bussiness.Implements
             if (PraseIPAddress(address, out string ipAddress, out int port, out int localPort))
             {
                 var instrument = new UdpInstrument();
-                instrument.Address = address;
                 instrument.IpAddress = ipAddress;
                 instrument.Port = port;
                 instrument.LocalPort = localPort;

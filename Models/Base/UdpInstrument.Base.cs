@@ -19,10 +19,6 @@ namespace Khsw.Instrument.Demo.Models.Base
         /// </summary>
         public UdpClient UdpClient { get; private set; }
 
-        /// <summary>
-        /// 是否链接
-        /// </summary>
-        public bool IsConnected { get; private set; }
 
         /// <summary>
         /// 接收分隔符

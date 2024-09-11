@@ -16,7 +16,7 @@ namespace Khsw.Instrument.Demo.Models.Base
         /// <summary>
         /// 设备地址
         /// </summary>
-        public string Address { get; set; }
+        public string Address => $"{ConnectType.ToString()}:{IpAddress}:{Port}:{LocalPort}";
 
         /// <summary>
         /// Ip地址
@@ -57,6 +57,11 @@ namespace Khsw.Instrument.Demo.Models.Base
         /// 
         /// </summary>
         public bool IsMulticasst { get; set; } = false;
+
+        /// <summary>
+        /// 是否链接
+        /// </summary>
+        public bool IsConnected { get; internal set; }
 
         /// <summary>
         /// 接收时的分隔符

@@ -1,4 +1,6 @@
-﻿using Khsw.Instrument.Demo.Infrastructures;
+﻿using Khsw.Instrument.Demo.Bussiness.Abstactions;
+using Khsw.Instrument.Demo.Infrastructures;
+using Khsw.Instrument.Demo.Models.Base;
 using Khsw.Instrument.Demo.Views.Base;
 
 namespace Khsw.Instrument.Demo.ViewModels
@@ -10,16 +12,9 @@ namespace Khsw.Instrument.Demo.ViewModels
         private readonly IRegionManager _regionManager;
         private readonly IContainerExtension _container;
         private readonly string _prefix = "ControlDemo";
-        private string _ipAddress = "192.168.1.1";
         #endregion
 
         #region Properties
-
-        public string IpAddress
-        {
-            get { return _ipAddress; }
-            set { SetProperty(ref _ipAddress, value); }
-        }
 
         public string InstrumentManangeRegionName
         {
@@ -30,9 +25,9 @@ namespace Khsw.Instrument.Demo.ViewModels
 
         #region Commands
 
-        private DelegateCommand _loginLoadingCommand;
-        public DelegateCommand LoginLoadingCommand =>
-            _loginLoadingCommand ?? (_loginLoadingCommand = new DelegateCommand(ExecuteLoginLoadingCommand));
+        private DelegateCommand _loadingCommand;
+        public DelegateCommand LoadingCommand =>
+            _loadingCommand ?? (_loadingCommand = new DelegateCommand(ExecuteLoadingCommand));
 
 
         #endregion
@@ -45,13 +40,14 @@ namespace Khsw.Instrument.Demo.ViewModels
             _container = container;
         }
 
-        private void ExecuteLoginLoadingCommand()
+        private void ExecuteLoadingCommand()
         {
+            var instrument = new UdpInstrument();
+            instrument.IpAddress = "192.168.1.199";
+            instrument.Port = 5025;
+            instrument.LocalPort = 12374;
             var parameters = new NavigationParameters();
-            parameters.Add("ipAddress", _ipAddress);
-
-            var _region = _container.Resolve<IRegionManager>();
-            var views = _region.Regions.Select(x => x.Name);
+            parameters.Add("instrument", instrument);
 
             _regionManager.RequestNavigate(InstrumentManangeRegionName, nameof(InstrumentManangeView), result =>
             {

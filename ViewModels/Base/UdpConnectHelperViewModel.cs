@@ -1,4 +1,5 @@
-﻿using Prism.Modularity;
+﻿using Khsw.Instrument.Demo.Models.Base;
+using Prism.Modularity;
 using Prism.Navigation.Regions;
 using System;
 using System.Collections.Generic;
@@ -10,15 +11,16 @@ using System.Xml.Linq;
 
 namespace Khsw.Instrument.Demo.ViewModels.Base
 {
-    public class UdpConnectHelperViewModel : BindableBase, INavigationAware, IRegionMemberLifetime
+    public class UdpConnectHelperViewModel : BindableBase
     {
         #region Fields
         private readonly IModuleManager _moduleManager;
         private readonly IRegionManager _regionManager;
         private readonly IContainerExtension _container;
         private string _ipAddress;
-        private string _port;
-        private string _localPort;
+        private int _port;
+        private int _localPort;
+        private InstrumentBase _instrument;
         #endregion
 
         #region Properties
@@ -29,28 +31,42 @@ namespace Khsw.Instrument.Demo.ViewModels.Base
         public string IpAddress
         {
             get { return _ipAddress; }
-            set { SetProperty(ref _ipAddress, value); }
+            set
+            {
+                if (SetProperty(ref _ipAddress, value))
+                {
+                    _instrument.IpAddress = value;
+                }
+            }
         }
 
         /// <summary>
         /// 设备端口号
         /// </summary>
-        public string Port
+        public int Port
         {
             get { return _port; }
-            set 
-            { SetProperty(ref _port, value); }
+            set
+            {
+                if (SetProperty(ref _port, value))
+                {
+                    _instrument.Port = value;
+                }
+            }
         }
 
         /// <summary>
         /// 本地端口号
         /// </summary>
-        public string LocalPort
+        public int LocalPort
         {
             get { return _localPort; }
-            set 
+            set
             {
-                SetProperty(ref _localPort, value); 
+                if (SetProperty(ref _localPort, value))
+                {
+                    _instrument.LocalPort = value;
+                }
             }
         }
 
@@ -66,20 +82,28 @@ namespace Khsw.Instrument.Demo.ViewModels.Base
             _regionManager = regionManager;
         }
 
-
-        public bool IsNavigationTarget(NavigationContext navigationContext)
+        #region Public
+        /// <summary>
+        /// 设置设备信息
+        /// </summary>
+        public void SetInstrument(InstrumentBase instrument)
         {
-            return true;
+            if (instrument == null)
+                return;
+
+            _instrument = instrument;
+
+            _ipAddress = instrument.IpAddress;
+            _port = instrument.Port;
+            _localPort = instrument.LocalPort;
+            RaisePropertyChanged(nameof(IpAddress));
+            RaisePropertyChanged(nameof(Port));
+            RaisePropertyChanged(nameof(LocalPort));
         }
+        #endregion
 
-        public void OnNavigatedFrom(NavigationContext navigationContext)
-        {
+        #region Private
 
-        }
-
-        public void OnNavigatedTo(NavigationContext navigationContext)
-        {
-
-        }
+        #endregion
     }
 }
