@@ -32,4 +32,10 @@
     <Folder Include="Controllers\Instuments\" />
   </ItemGroup>
 
+	<ItemGroup>
+		<Compile Update="Models/Base/UdpInstrument.*.cs">
+			<DependentUpon>UdpInstrument.cs</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
 </Project>
