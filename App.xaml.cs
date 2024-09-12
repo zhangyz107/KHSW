@@ -1,9 +1,13 @@
-﻿using Khsw.Instrument.Demo.Bussiness.Abstactions;
+﻿using AutoMapper;
+using Khsw.Instrument.Demo.Bussiness.Abstactions;
 using Khsw.Instrument.Demo.Bussiness.Implements;
+using Khsw.Instrument.Demo.Commons.Provider;
 using Khsw.Instrument.Demo.ViewModels.Dialogs;
 using Khsw.Instrument.Demo.Views;
 using Khsw.Instrument.Demo.Views.Base;
 using Khsw.Instrument.Demo.Views.Dialogs;
+using Microsoft.Extensions.DependencyInjection;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -26,7 +30,6 @@ namespace Khsw.Instrument.Demo
             return Container.Resolve<ShellView>();
         }
 
-
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
             containerRegistry.Register<UdpConnectHelperView>();
@@ -36,6 +39,10 @@ namespace Khsw.Instrument.Demo
             containerRegistry.RegisterSingleton<IInstrumentConnectService, InstrumentConnectService>();
             containerRegistry.RegisterSingleton<IInstrumentManageService, InstrumentManageService>();
 
+            //注册AutoMapper
+            containerRegistry.RegisterSingleton<IAutoMapperProvider, AutoMapperProvider>();
+            containerRegistry.Register(typeof(IMapper), GetMapper);
+
             //注册导航
             containerRegistry.RegisterForNavigation<InstrumentManangeView>();
 
@@ -43,6 +50,12 @@ namespace Khsw.Instrument.Demo
             containerRegistry.RegisterDialog<AlertDialog, AlertDialogViewModel>();
             containerRegistry.RegisterDialog<SuccessDialog, SuccessDialogViewModel>();
             containerRegistry.RegisterDialog<WarningDialog, WarningDialogViewModel>();
+        }
+
+        private IMapper GetMapper(IContainerProvider container)
+        {
+            var provider = container.Resolve<IAutoMapperProvider>();
+            return provider.GetMapper();
         }
 
 

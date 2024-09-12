@@ -20,7 +20,7 @@ namespace Khsw.Instrument.Demo.Commons.Helper
         {
             // 检查字符串是否为空或无效
             if (string.IsNullOrEmpty(hexString))
-                throw new ArgumentException("Hex string cannot be null or empty", nameof(hexString));
+                throw new ArgumentNullException("十六进制字符串不能为空", nameof(hexString));
 
             // 移除前缀 "0x" 或 "0X"
             if (hexString.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
@@ -30,7 +30,7 @@ namespace Khsw.Instrument.Demo.Commons.Helper
 
             // 检查字符串长度是否为偶数
             if (hexString.Length % 2 != 0)
-                throw new ArgumentException("Hex string must have an even length", nameof(hexString));
+                throw new ArgumentException("十六进制字符串的长度必须为偶数", nameof(hexString));
 
             // 转换为字节数组
             int numberOfChars = hexString.Length;

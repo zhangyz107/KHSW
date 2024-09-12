@@ -1,17 +1,12 @@
-﻿using Khsw.Instrument.Demo.Bussiness.Abstactions;
+﻿using AutoMapper;
 using Khsw.Instrument.Demo.Commons.Helper;
 using Khsw.Instrument.Demo.DataModels;
 using Khsw.Instrument.Demo.Infrastructures;
 using Khsw.Instrument.Demo.Models;
 using Khsw.Instrument.Demo.Models.Base;
 using Khsw.Instrument.Demo.Views.Base;
-using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Text;
-using System.Windows.Interop;
-using static MaterialDesignThemes.Wpf.Theme;
+using System.IO;
 
 namespace Khsw.Instrument.Demo.ViewModels
 {
@@ -22,9 +17,12 @@ namespace Khsw.Instrument.Demo.ViewModels
         private readonly IRegionManager _regionManager;
         private readonly IContainerExtension _container;
         private readonly IDialogService _dialogService;
+        private readonly IMapper _mapper;
         private readonly string _prefix = "ControlDemo";
         private readonly string _commandHead = "0xEB90";
         private readonly string _commandEnd = "0xDEAD";
+        private readonly string _commandListFileName = $"{nameof(ControlDemoViewModel)}CommandList.xml";
+        //private readonly string _commandListFileName = $"{nameof(ControlDemoViewModel)}CommandList.xml";
         private readonly int _defaultLength = 5;
         private object _commandInformationView;
         private int _boardID;
@@ -63,7 +61,6 @@ namespace Khsw.Instrument.Demo.ViewModels
         public DelegateCommand LoadingCommand =>
             _loadingCommand ?? (_loadingCommand = new DelegateCommand(ExecuteLoadingCommand));
 
-
         private DelegateCommand<CommandDataModel> _sendCommand;
         public DelegateCommand<CommandDataModel> SendCommand =>
             _sendCommand ?? (_sendCommand = new DelegateCommand<CommandDataModel>(ExecuteSendCommand));
@@ -76,12 +73,14 @@ namespace Khsw.Instrument.Demo.ViewModels
             IContainerExtension container,
             IModuleManager moduleManager,
             IRegionManager regionManager,
-            IDialogService dialogService)
+            IDialogService dialogService,
+            IMapper mapper)
         {
             _container = container;
             _moduleManager = moduleManager;
             _regionManager = regionManager;
             _dialogService = dialogService;
+            _mapper = mapper;
         }
 
         private void ExecuteLoadingCommand()
@@ -90,7 +89,7 @@ namespace Khsw.Instrument.Demo.ViewModels
             _instrument = InitInstrumentInfo();
 
             //初始化指令
-            InitCommandList();
+            LoadCommandList();
 
             #region 初始化界面显示
             var parameters = new NavigationParameters();
@@ -111,6 +110,20 @@ namespace Khsw.Instrument.Demo.ViewModels
             #endregion
         }
 
+        internal void SaveData()
+        {
+            var commandList = _mapper.Map<IList<CommandDataModel>, IList<Command>>(CommandList);
+
+            try
+            {
+                XmlHelper.SerializeToXml(commandList, _commandListFileName);
+            }
+            catch (Exception)
+            {
+                //todo:记录日志保存数据失败
+            }
+        }
+
         private UdpInstrument InitInstrumentInfo()
         {
             var instrument = new UdpInstrument();
@@ -120,75 +133,137 @@ namespace Khsw.Instrument.Demo.ViewModels
             return instrument;
         }
 
+        private void LoadCommandList()
+        {
+            var dir = AppDomain.CurrentDomain.BaseDirectory;
+            var filePath = Path.Combine(dir, _commandListFileName);
+            if (File.Exists(filePath))
+            {
+                var commandList = XmlHelper.DeserializeListFromXml<Command>(filePath);
+
+                if (commandList != null && commandList.Any())
+                {
+                    foreach (var command in commandList)
+                    {
+                        CommandList.Add(_mapper.Map<CommandDataModel>(command));
+                    }
+                }
+                else
+                {
+                    InitCommandList();
+                }
+            }
+            else
+            {
+                InitCommandList();
+            }
+
+        }
+
         private void InitCommandList()
         {
             var index = 1;
 
-            var command1 = GetStartSignal(index++);
+            var command1 = GetStartSignalCommand(index++);
             CommandList.Add(command1);
 
-            var command2 = GetLogicReset(index++);
+            var command2 = GetLogicResetCommand(index++);
             CommandList.Add(command2);
 
-            var command3 = GetSubcarrierSpacing_15(index++);
+            var command3 = GetTBSizeCommand(index++);
             CommandList.Add(command3);
 
+            var command4 = GetCbConfigurationCommand(index++);
+            CommandList.Add(command4);
+
+            var command5 = GetFillIn0Command(index++);
+            CommandList.Add(command5);
+
+            var command6 = GetLDPCEncodingConfigurationCommand(index++);
+            CommandList.Add(command6);
+
+            var command7 = GetLDPCRateMatchingSettingsCommand(index++);
+            CommandList.Add(command7);
+
+            var command8 = GetInterweavingSettingsCommand(index++);
+            CommandList.Add(command8);
+
+            var command9 = GetScramblingRandomSeedCommand(index++);
+            CommandList.Add(command9);
+
+            var command10 = GetFftLengthCommand(index++);
+            CommandList.Add(command10);
+
+            var command11 = GetDmrsSettingsCommand(index++);
+            CommandList.Add(command11);
+
+            var command12 = GetCpSettingsCommand(index++);
+            CommandList.Add(command12);
         }
 
         private void ExecuteSendCommand(CommandDataModel model)
         {
-            var length = BitConverter.GetBytes(model.CommnadLength);
-            var id = model.CommandId.ToByteArray();
-            var data = string.IsNullOrEmpty(model.CommandContent) ? null : model.CommandContent.ToByteArray();
-            var command = GetCommand(length, id, data);
-
-            //((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
-            //{
-            //    RecordTime = DateTime.Now,
-            //    RecordMessage = $"发送消息:{command.ToAppendString()}" 
-            //});
-
-#if DEBUG
-
-            if (_connectedInstrument == null)
+            try
             {
-                var instrumentManage = _container.Resolve<IInstrumentManageService>();
-                _connectedInstrument = instrumentManage?.GetInstrumentByAddress(_instrument?.Address) as UdpInstrument;
+                var length = BitConverter.GetBytes(model.CommnadLength);
+                var id = model.CommandId.ToByteArray();
+                var data = string.IsNullOrEmpty(model.CommandContent) ? null : model.CommandContent.ToByteArray();
+                var command = GetCommand(length, id, data);
 
-                if (_connectedInstrument != null)
+                ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
                 {
-                    _connectedInstrument.SendMessageEvent += (byte[] msg) =>
-                    {
-                        ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
-                        {
-                            RecordTime = DateTime.Now,
-                            RecordMessage = $"发送消息:{msg.ToAppendString()}"
-                        });
-                    };
-
-                    _connectedInstrument.ReceiveMessageEvent += (UdpInstrument instrument) =>
-                    {
-                        var message = instrument.GetReceiveMessageFromQueue();
-                        if (message != null)
-                            ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
-                            {
-                                RecordTime = message.RecordTime,
-                                RecordMessage = $"接收消息:{message.RecordMessage}"
-                            });
-                    };
-                }
+                    RecordTime = DateTime.Now,
+                    RecordMessage = $"发送消息:{command.ToAppendString()}"
+                });
             }
-
-            if (_connectedInstrument == null)
+            catch (Exception e)
             {
                 //todo:记录日志 
-                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message未能找到已连接的设备"));
-                return;
+                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message={e.Message}"));
             }
 
-            _connectedInstrument.Send(command);
 
-#endif
+            //#if DEBUG
+
+            //            if (_connectedInstrument == null)
+            //            {
+            //                var instrumentManage = _container.Resolve<IInstrumentManageService>();
+            //                _connectedInstrument = instrumentManage?.GetInstrumentByAddress(_instrument?.Address) as UdpInstrument;
+
+            //                if (_connectedInstrument != null)
+            //                {
+            //                    _connectedInstrument.SendMessageEvent += (byte[] msg) =>
+            //                    {
+            //                        ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
+            //                        {
+            //                            RecordTime = DateTime.Now,
+            //                            RecordMessage = $"发送消息:{msg.ToAppendString()}"
+            //                        });
+            //                    };
+
+            //                    _connectedInstrument.ReceiveMessageEvent += (UdpInstrument instrument) =>
+            //                    {
+            //                        var message = instrument.GetReceiveMessageFromQueue();
+            //                        if (message != null)
+            //                            ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
+            //                            {
+            //                                RecordTime = message.RecordTime,
+            //                                RecordMessage = $"接收消息:{message.RecordMessage}"
+            //                            });
+            //                    };
+            //                }
+            //            }
+
+            //            if (_connectedInstrument == null)
+            //            {
+            //                //todo:记录日志 
+            //                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message未能找到已连接的设备"));
+            //                return;
+            //            }
+
+            //            _connectedInstrument.Send(command);
+
+            //#endif
         }
 
         public byte[] GetCommand(byte[] length, byte[] cmdID, byte[] data)
@@ -228,15 +303,15 @@ namespace Khsw.Instrument.Demo.ViewModels
         /// <summary>
         /// 启动信号
         /// </summary>
-        private CommandDataModel GetStartSignal(int index)
+        private CommandDataModel GetStartSignalCommand(int index)
         {
             var command = new CommandDataModel()
             {
+                Id = Guid.NewGuid().ToString(),
                 Index = index,
                 CommandName = "启动信号",
                 CommandHead = _commandHead,
                 CommandEnd = _commandEnd,
-                CommnadLength = 0,
                 CommandId = "0x0119"
             };
             return command;
@@ -245,37 +320,207 @@ namespace Khsw.Instrument.Demo.ViewModels
         /// <summary>
         /// 逻辑复位
         /// </summary>
-        private CommandDataModel GetLogicReset(int index)
+        private CommandDataModel GetLogicResetCommand(int index)
         {
             var command = new CommandDataModel()
             {
+                Id = Guid.NewGuid().ToString(),
                 Index = index,
                 CommandName = "逻辑复位",
                 CommandHead = _commandHead,
                 CommandEnd = _commandEnd,
-                CommnadLength = 0,
                 CommandId = "0x0120"
             };
             return command;
         }
 
         /// <summary>
-        /// 子载波间隔15khZ
+        /// TB大小
         /// </summary>
-        /// <param name="index"></param>
-        /// <returns></returns>
-        private CommandDataModel GetSubcarrierSpacing_15(int index)
+        private CommandDataModel GetTBSizeCommand(int index)
         {
             var command = new CommandDataModel()
             {
+                Id = Guid.NewGuid().ToString(),
                 Index = index,
-                CommandName = "子载波间隔",
+                CommandName = "TB大小",
                 CommandHead = _commandHead,
                 CommandEnd = _commandEnd,
-                CommnadLength = 1,
-                CommandId = "0x0121",
-                CommandContent = "0x00",
-                Remark = "15kHz"
+                ContentEnable = true,
+                CommnadLength = 4,
+                CommandId = "0x0122",
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// Cb配置
+        /// </summary>
+        private CommandDataModel GetCbConfigurationCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "Cb配置",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = true,
+                CommnadLength = 4,
+                CommandId = "0x0124",
+            };
+            return command;
+        }
+
+
+        /// <summary>
+        /// 填0数
+        /// </summary>
+        private CommandDataModel GetFillIn0Command(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "填0数",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = true,
+                CommnadLength = 2,
+                CommandId = "0x0125",
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// LDPC编码配置
+        /// </summary>
+        private CommandDataModel GetLDPCEncodingConfigurationCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "LDPC编码配置",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = true,
+                CommnadLength = 2,
+                CommandId = "0x0126",
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// LDPC速率匹配设置
+        /// </summary>
+        private CommandDataModel GetLDPCRateMatchingSettingsCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "LDPC速率匹配设置",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = true,
+                CommnadLength = 4,
+                CommandId = "0x0128",
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// 交织设置
+        /// </summary>
+        private CommandDataModel GetInterweavingSettingsCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "交织设置",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = true,
+                CommnadLength = 4,
+                CommandId = "0x0129",
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// 扰码随机种子
+        /// </summary>
+        private CommandDataModel GetScramblingRandomSeedCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "扰码随机种子",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = true,
+                CommnadLength = 8,
+                CommandId = "0x012b",
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// Fft长度
+        /// </summary>
+        private CommandDataModel GetFftLengthCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "Fft长度",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = true,
+                CommnadLength = 2,
+                CommandId = "0x012c",
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// Dmrs设置
+        /// </summary>
+        private CommandDataModel GetDmrsSettingsCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "Dmrs设置",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = true,
+                CommnadLength = 25,
+                CommandId = "0x012d",
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// Cp配置
+        /// </summary>
+        private CommandDataModel GetCpSettingsCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "Cp配置",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = true,
+                CommnadLength = 20,
+                CommandId = "0x012e",
             };
             return command;
         }

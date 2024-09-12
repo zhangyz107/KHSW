@@ -19,12 +19,18 @@ namespace Khsw.Instrument.Demo.DataModels
         private short _commnadLength;
         private string _commandId;
         private string _commnadContent = string.Empty;
+        private bool _contentEnable = false;
         private string _commandEnd;
         private string _remark;
-
         #endregion
 
         #region Properties
+        /// <summary>
+        /// ID
+        /// </summary>
+        public string Id { get; set; }
+
+
         /// <summary>
         /// 序号
         /// </summary>
@@ -60,8 +66,6 @@ namespace Khsw.Instrument.Demo.DataModels
             get => _commnadLength;
             set => SetProperty(ref _commnadLength, value);
         }
-        #endregion
-
 
         /// <summary>
         /// 指令Id
@@ -91,6 +95,15 @@ namespace Khsw.Instrument.Demo.DataModels
         }
 
         /// <summary>
+        /// 内容设置使能
+        /// </summary>
+        public bool ContentEnable
+        {
+            get => _contentEnable;
+            set => SetProperty(ref _contentEnable, value);
+        }
+
+        /// <summary>
         /// 备注
         /// </summary>
         public string Remark
@@ -98,6 +111,6 @@ namespace Khsw.Instrument.Demo.DataModels
             get { return _remark; }
             set { _remark = value; }
         }
-
+        #endregion
     }
 }

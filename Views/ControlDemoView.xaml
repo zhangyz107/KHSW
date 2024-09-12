@@ -9,7 +9,8 @@
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
-             prism:ViewModelLocator.AutoWireViewModel="True">
+             prism:ViewModelLocator.AutoWireViewModel="True"
+             >
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
@@ -22,7 +23,7 @@
             <RowDefinition  Height="*"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1.4*"></ColumnDefinition>
+            <ColumnDefinition Width="2*"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
@@ -35,20 +36,26 @@
             <ContentControl prism:RegionManager.RegionName="{Binding InstrumentManangeRegionName}" Margin="5"/>
 
             <Label Content="遥测指令" Grid.Row="1"></Label>
-            <DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" ItemsSource="{Binding CommandList}" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+            <DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" ItemsSource="{Binding CommandList}" ScrollViewer.HorizontalScrollBarVisibility="Visible">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="序号" IsReadOnly="True" Binding="{Binding Index}"></DataGridTextColumn>
                     <DataGridTextColumn Header="指令名称" IsReadOnly="True" Binding="{Binding CommandName}"></DataGridTextColumn>
                     <DataGridTextColumn Header="指令头" IsReadOnly="True" Binding="{Binding CommandHead}"></DataGridTextColumn>
                     <DataGridTextColumn Header="指令长" IsReadOnly="True" Binding="{Binding CommnadLength,StringFormat=0x{0:X}}"></DataGridTextColumn>
                     <DataGridTextColumn Header="指令ID" IsReadOnly="True" Binding="{Binding CommandId}"></DataGridTextColumn>
-                    <DataGridTextColumn Header="指令内容" IsReadOnly="True" Binding="{Binding CommandContent}"></DataGridTextColumn>
+                    <DataGridTextColumn Header="指令内容" IsReadOnly="{Binding ContentEnable}" Binding="{Binding CommandContent,Mode=TwoWay,UpdateSourceTrigger=LostFocus}" Width="*">
+                        <DataGridTextColumn.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="ToolTip" Value="{Binding CommandContent}" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
                     <DataGridTextColumn Header="指令尾" IsReadOnly="True" Binding="{Binding CommandEnd}"></DataGridTextColumn>
                     <DataGridTextColumn Header="备注" IsReadOnly="True" Binding="{Binding Remark}"></DataGridTextColumn>
-                    <DataGridTemplateColumn Header="操作" IsReadOnly="True" >
+                    <DataGridTemplateColumn Header="操作" IsReadOnly="True" Width="150">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="发送指令" Command="{Binding DataContext.SendCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type UserControl}}}" CommandParameter="{Binding}"></Button>
+                                <Button Content="发送指令" Command="{Binding DataContext.SendCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type UserControl}}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignFlatDarkButton}"></Button>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

@@ -11,7 +11,10 @@
         mc:Ignorable="d"
         prism:RegionManager.RegionManager="{Binding RegionMannager}"
         prism:ViewModelLocator.AutoWireViewModel="True"
-        Title="{Binding Title}" Height="740" Width="1300">
+        Title="{Binding Title}" 
+        WindowState="Maximized"
+        MinHeight="740" 
+        MinWidth="1300">
 
     <Grid>
         <TabControl>

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Khsw.Instrument.Demo.ViewModels;
+using Khsw.Instrument.Demo.ViewModels.Base;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +25,21 @@ namespace Khsw.Instrument.Demo.Views
         public ControlDemoView(IRegionManager regionManager)
         {
             InitializeComponent();
+
+            Dispatcher.ShutdownStarted += Dispatcher_ShutdownStarted;
+        }
+
+        private void Dispatcher_ShutdownStarted(object? sender, EventArgs e)
+        {
+            ViewModel?.SaveData();
+        }
+
+        public ControlDemoViewModel ViewModel
+        {
+            get
+            {
+                return DataContext as ControlDemoViewModel;
+            }
         }
     }
 }
