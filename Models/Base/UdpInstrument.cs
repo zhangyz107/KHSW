@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using System.Collections.Concurrent;
 using System.Windows.Interop;
 using Khsw.Instrument.Demo.Commons.Enums;
+using Khsw.Instrument.Demo.Commons.Helper;
 
 namespace Khsw.Instrument.Demo.Models.Base
 {
@@ -19,11 +20,14 @@ namespace Khsw.Instrument.Demo.Models.Base
     {
         #region Field
         //发送队列
-        private readonly ConcurrentQueue<string> _sendQueue = new ConcurrentQueue<string>();
-        private readonly ConcurrentQueue<ReceiveMessageInfo> _receiveQueue = new ConcurrentQueue<ReceiveMessageInfo>();
+        private readonly ConcurrentQueue<byte[]> _sendQueue = new ConcurrentQueue<byte[]>();
+        private readonly ConcurrentQueue<RecordMessageDataModel> _receiveQueue = new ConcurrentQueue<RecordMessageDataModel>();
         #endregion
 
         #region Properties
+        //接收数据事件
+        public Action<byte[]> SendMessageEvent = null;
+
         //接收数据事件
         public Action<UdpInstrument> ReceiveMessageEvent = null;
         #endregion
@@ -61,10 +65,9 @@ namespace Khsw.Instrument.Demo.Models.Base
                 StartSendQueueTask();
                 StartReceiveTask();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                //todo:记录日志 
-                Console.WriteLine(ex.Message);
+                throw;
             }
 
             return IsConnected;
@@ -100,17 +103,35 @@ namespace Khsw.Instrument.Demo.Models.Base
         /// 发送命令
         /// </summary>
         /// <param name="data"></param>
+        public void Send(byte[] data)
+        {
+            if (data == null || !data.Any()) { return; }
+
+            if (_sendQueue.Count > MaxSendCount)
+            {
+                _sendQueue.TryDequeue(out byte[] msg);
+                //todo:记录被剔除的消息
+                Console.WriteLine($"发送内容:{msg.ToAppendString()}被剔除发送队列");
+            }
+            _sendQueue.Enqueue(data);
+        }
+
+        /// <summary>
+        /// 发送命令
+        /// </summary>
+        /// <param name="data"></param>
         public void Send(string data)
         {
             if (string.IsNullOrEmpty(data)) { return; }
 
             if (_sendQueue.Count > MaxSendCount)
             {
-                _sendQueue.TryDequeue(out string msg);
+                _sendQueue.TryDequeue(out byte[] msg);
                 //todo:记录被剔除的消息
-                Console.WriteLine($"发送内容:{msg}被剔除发送队列");
+                Console.WriteLine($"发送内容:{StringEncoder.GetString(msg)}被剔除发送队列");
             }
-            _sendQueue.Enqueue(data);
+            var dataBytes = StringEncoder.GetBytes(data);
+            _sendQueue.Enqueue(dataBytes);
         }
 
         /// <summary>
@@ -133,9 +154,9 @@ namespace Khsw.Instrument.Demo.Models.Base
         /// <summary>
         /// 从队列中获取消息
         /// </summary>
-        public ReceiveMessageInfo GetReceiveMessageFromQueue()
+        public RecordMessageDataModel GetReceiveMessageFromQueue()
         {
-            _receiveQueue.TryDequeue(out ReceiveMessageInfo msg);
+            _receiveQueue.TryDequeue(out RecordMessageDataModel msg);
             return msg;
         }
 
@@ -180,8 +201,8 @@ namespace Khsw.Instrument.Demo.Models.Base
                 {
                     try
                     {
-                        if (_sendQueue.TryDequeue(out string msg) && !string.IsNullOrEmpty(msg))
-                            Send(StringEncoder.GetBytes(msg));
+                        if (_sendQueue.TryDequeue(out byte[] msg) && msg.Any())
+                            SendToInstrument(msg);
                         else
                             await Task.Delay(10);
 
@@ -196,7 +217,7 @@ namespace Khsw.Instrument.Demo.Models.Base
             }, TaskCreationOptions.LongRunning);
         }
 
-        private void Send(byte[] data)
+        private void SendToInstrument(byte[] data)
         {
             try
             {
@@ -206,6 +227,9 @@ namespace Khsw.Instrument.Demo.Models.Base
                 }
                 UdpClient.Client.SendTimeout = this.SendTimeOut;
                 UdpClient.Client.Send(data);
+
+                if (SendMessageEvent != null)
+                    SendMessageEvent(data);
             }
             catch
             {
@@ -227,15 +251,15 @@ namespace Khsw.Instrument.Demo.Models.Base
                             var message = Encoding.UTF8.GetString(result.Buffer);
                             if (_receiveQueue.Count > MaxSendCount)
                             {
-                                _receiveQueue.TryDequeue(out ReceiveMessageInfo msg);
+                                _receiveQueue.TryDequeue(out RecordMessageDataModel msg);
                                 //todo:记录被剔除的消息
-                                Console.WriteLine($"接收时间:{msg.ReceiveTime},内容为:{msg.ReceiveContent}被剔除接收消息队列");
+                                Console.WriteLine($"接收时间:{msg.RecordTime},内容为:{msg.RecordMessage}被剔除接收消息队列");
                             }
 
-                            _receiveQueue.Enqueue(new ReceiveMessageInfo()
+                            _receiveQueue.Enqueue(new RecordMessageDataModel()
                             {
-                                ReceiveTime = DateTime.Now,
-                                ReceiveContent = message
+                                RecordTime = DateTime.Now,
+                                RecordMessage = message
                             });
 
                             if (ReceiveMessageEvent != null)

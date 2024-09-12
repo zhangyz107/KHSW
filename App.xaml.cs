@@ -1,7 +1,9 @@
 ﻿using Khsw.Instrument.Demo.Bussiness.Abstactions;
 using Khsw.Instrument.Demo.Bussiness.Implements;
+using Khsw.Instrument.Demo.ViewModels.Dialogs;
 using Khsw.Instrument.Demo.Views;
 using Khsw.Instrument.Demo.Views.Base;
+using Khsw.Instrument.Demo.Views.Dialogs;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -28,6 +30,7 @@ namespace Khsw.Instrument.Demo
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
             containerRegistry.Register<UdpConnectHelperView>();
+            containerRegistry.Register<CommandInformationView>();
 
             //注册全局命令
             containerRegistry.RegisterSingleton<IInstrumentConnectService, InstrumentConnectService>();
@@ -35,7 +38,11 @@ namespace Khsw.Instrument.Demo
 
             //注册导航
             containerRegistry.RegisterForNavigation<InstrumentManangeView>();
-            //containerRegistry.RegisterForNavigation<UdpConnectHelperView>();
+
+            //注册对话框
+            containerRegistry.RegisterDialog<AlertDialog, AlertDialogViewModel>();
+            containerRegistry.RegisterDialog<SuccessDialog, SuccessDialogViewModel>();
+            containerRegistry.RegisterDialog<WarningDialog, WarningDialogViewModel>();
         }
 
 

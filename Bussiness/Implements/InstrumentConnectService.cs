@@ -11,11 +11,13 @@ namespace Khsw.Instrument.Demo.Bussiness.Implements
     {
         #region Fields
         private readonly IContainerExtension _container;
+        private readonly IDialogService _dialogService;
         #endregion
 
-        public InstrumentConnectService(IContainerExtension container)
+        public InstrumentConnectService(IContainerExtension container, IDialogService dialogService)
         {
             _container = container;
+            _dialogService = dialogService;
         }
 
         #region Public
@@ -74,7 +76,15 @@ namespace Khsw.Instrument.Demo.Bussiness.Implements
                 instrument.IpAddress = ipAddress;
                 instrument.Port = port;
                 instrument.LocalPort = localPort;
-                instrument.CreateConnect();
+                try
+                {
+                    instrument.CreateConnect();
+                }
+                catch (Exception e)
+                {
+                    //todo:记录日志 
+                    _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message={e.Message}"));
+                }
                 return instrument;
             }
 
