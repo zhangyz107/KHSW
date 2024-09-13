@@ -243,7 +243,7 @@ namespace Khsw.Instrument.Demo.ViewModels
             var id = model.CommandId.ToByteArray();
             var data = string.IsNullOrEmpty(model.CommandContent) ? null : model.CommandContent.ToByteArray();
             var command = GetCommand(length, id, data);
-#if DEBUG
+#if SIMULATION
             try
             {
                 ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
