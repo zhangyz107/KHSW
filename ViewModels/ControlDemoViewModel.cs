@@ -303,8 +303,8 @@ namespace Khsw.Instrument.Demo.ViewModels
                 //todo:记录日志 
                 _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message={e.Message}"));
 
-#endif
             }
+#endif
         }
 
         public byte[] GetCommand(byte[] length, byte[] cmdID, byte[] data)
