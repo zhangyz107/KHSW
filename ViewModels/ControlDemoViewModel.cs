@@ -251,7 +251,6 @@ namespace Khsw.Instrument.Demo.ViewModels
                     RecordTime = DateTime.Now,
                     RecordMessage = $"发送消息:{command.ToAppendString()}"
                 });
-                Console.WriteLine(command);
             }
             catch (Exception e)
             {
