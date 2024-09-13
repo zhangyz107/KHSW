@@ -237,6 +237,7 @@ namespace Khsw.Instrument.Demo.ViewModels
 
         private void ExecuteSendCommand(CommandDataModel model)
         {
+#if DEBUG
             try
             {
                 var length = BitConverter.GetBytes(model.CommnadLength);
@@ -255,49 +256,53 @@ namespace Khsw.Instrument.Demo.ViewModels
                 //todo:记录日志 
                 _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message={e.Message}"));
             }
+#else
+            try
+            {
+            if (_connectedInstrument == null)
+            {
+                var instrumentManage = _container.Resolve<IInstrumentManageService>();
+                _connectedInstrument = instrumentManage?.GetInstrumentByAddress(_instrument?.Address) as UdpInstrument;
 
+                if (_connectedInstrument != null)
+                {
+                    _connectedInstrument.SendMessageEvent += (byte[] msg) =>
+                    {
+                        ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
+                        {
+                            RecordTime = DateTime.Now,
+                            RecordMessage = $"发送消息:{msg.ToAppendString()}"
+                        });
+                    };
 
-            //#if DEBUG
+                    _connectedInstrument.ReceiveMessageEvent += (UdpInstrument instrument) =>
+                    {
+                        var message = instrument.GetReceiveMessageFromQueue();
+                        if (message != null)
+                            ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
+                            {
+                                RecordTime = message.RecordTime,
+                                RecordMessage = $"接收消息:{message.RecordMessage}"
+                            });
+                    };
+                }
+            }
 
-            //            if (_connectedInstrument == null)
-            //            {
-            //                var instrumentManage = _container.Resolve<IInstrumentManageService>();
-            //                _connectedInstrument = instrumentManage?.GetInstrumentByAddress(_instrument?.Address) as UdpInstrument;
+            if (_connectedInstrument == null)
+            {
+                //todo:记录日志 
+                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message未能找到已连接的设备"));
+                return;
+            }
 
-            //                if (_connectedInstrument != null)
-            //                {
-            //                    _connectedInstrument.SendMessageEvent += (byte[] msg) =>
-            //                    {
-            //                        ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
-            //                        {
-            //                            RecordTime = DateTime.Now,
-            //                            RecordMessage = $"发送消息:{msg.ToAppendString()}"
-            //                        });
-            //                    };
-
-            //                    _connectedInstrument.ReceiveMessageEvent += (UdpInstrument instrument) =>
-            //                    {
-            //                        var message = instrument.GetReceiveMessageFromQueue();
-            //                        if (message != null)
-            //                            ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
-            //                            {
-            //                                RecordTime = message.RecordTime,
-            //                                RecordMessage = $"接收消息:{message.RecordMessage}"
-            //                            });
-            //                    };
-            //                }
-            //            }
-
-            //            if (_connectedInstrument == null)
-            //            {
-            //                //todo:记录日志 
-            //                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message未能找到已连接的设备"));
-            //                return;
-            //            }
-
-            //            _connectedInstrument.Send(command);
-
-            //#endif
+            _connectedInstrument.Send(command);
+                        }
+            catch (Exception e)
+            {
+                //todo:记录日志 
+                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message={e.Message}"));
+            
+#endif
         }
 
         public byte[] GetCommand(byte[] length, byte[] cmdID, byte[] data)
