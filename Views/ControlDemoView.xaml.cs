@@ -1,4 +1,5 @@
-﻿using Khsw.Instrument.Demo.ViewModels;
+﻿using Khsw.Instrument.Demo.DataModels;
+using Khsw.Instrument.Demo.ViewModels;
 using Khsw.Instrument.Demo.ViewModels.Base;
 using System;
 using System.Collections.Generic;
@@ -39,6 +40,16 @@ namespace Khsw.Instrument.Demo.Views
             get
             {
                 return DataContext as ControlDemoViewModel;
+            }
+        }
+
+        private void DataGrid_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
+        {
+            var dataItem = e.Row.Item as CommandDataModel;
+            // 如果列是 DataGridTemplateColumn 并且只读，取消编辑模式
+            if (dataItem != null && dataItem.IsReadOnly)
+            {
+                e.Cancel = true;
             }
         }
     }

@@ -2,6 +2,7 @@
 using Khsw.Instrument.Demo.Bussiness.Abstactions;
 using Khsw.Instrument.Demo.Bussiness.Implements;
 using Khsw.Instrument.Demo.Commons.Provider;
+using Khsw.Instrument.Demo.ViewModels;
 using Khsw.Instrument.Demo.ViewModels.Dialogs;
 using Khsw.Instrument.Demo.Views;
 using Khsw.Instrument.Demo.Views.Base;
@@ -50,6 +51,8 @@ namespace Khsw.Instrument.Demo
             containerRegistry.RegisterDialog<AlertDialog, AlertDialogViewModel>();
             containerRegistry.RegisterDialog<SuccessDialog, SuccessDialogViewModel>();
             containerRegistry.RegisterDialog<WarningDialog, WarningDialogViewModel>();
+
+            containerRegistry.RegisterDialog<ViewDataDetailView, ViewDataDetailViewModel>();
         }
 
         private IMapper GetMapper(IContainerProvider container)
