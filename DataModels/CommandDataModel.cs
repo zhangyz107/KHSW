@@ -1,4 +1,5 @@
-﻿using Khsw.Instrument.Demo.Commons.Helper;
+﻿using Khsw.Instrument.Demo.Commons.Enums;
+using Khsw.Instrument.Demo.Commons.Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,9 @@ namespace Khsw.Instrument.Demo.DataModels
         private bool _contentEnable = false;
         private string _commandEnd;
         private string _remark;
+        private InputModeEnum? _inputMode = InputModeEnum.Direct;
+        private ComboboxDataSourceTypeEnum? _comboboxDataSourceType;
+        private object _comboboxDataSource;
         #endregion
 
         #region Properties
@@ -111,6 +115,34 @@ namespace Khsw.Instrument.Demo.DataModels
             get { return _remark; }
             set { _remark = value; }
         }
+
+        /// <summary>
+        /// 输入模式
+        /// </summary>
+        public InputModeEnum? InputMode
+        {
+            get => _inputMode;
+            set => SetProperty(ref _inputMode, value);
+        }
+
+        /// <summary>
+        /// 下拉数据源类型(仅对下拉型输入模式有用)
+        /// </summary>
+        public ComboboxDataSourceTypeEnum? ComboboxDataSourceType
+        {
+            get => _comboboxDataSourceType;
+            set => SetProperty(ref _comboboxDataSourceType, value);
+        }
+
+        /// <summary>
+        /// 下拉数据源
+        /// </summary>
+        public object ComboboxDataSource
+        {
+            get => _comboboxDataSource;
+            set => SetProperty(ref _comboboxDataSource, value);
+        }
+
         #endregion
     }
 }

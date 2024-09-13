@@ -18,6 +18,25 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
 
+    <UserControl.Resources>
+        <DataTemplate x:Key="TextBoxTemplate">
+            <TextBox Text="{Binding CommandContent,Mode=TwoWay,UpdateSourceTrigger=LostFocus}" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="ComboBoxTemplate">
+            <ComboBox ItemsSource="{Binding ComboboxDataSource,Mode=OneWay}" DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding CommandContent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="ButtonTemplate">
+            <Button Content="Click me" Command="{Binding}" />
+        </DataTemplate>
+
+        <local:ControlDemoViewSelector x:Key="CellTemplateSelector"
+                               TextBoxTemplate="{StaticResource TextBoxTemplate}"
+                               ComboBoxTemplate="{StaticResource ComboBoxTemplate}"
+                               ButtonTemplate="{StaticResource ButtonTemplate}" />
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition  Height="*"></RowDefinition>
@@ -43,13 +62,23 @@
                     <DataGridTextColumn Header="指令头" IsReadOnly="True" Binding="{Binding CommandHead}"></DataGridTextColumn>
                     <DataGridTextColumn Header="指令长" IsReadOnly="True" Binding="{Binding CommnadLength,StringFormat=0x{0:X}}"></DataGridTextColumn>
                     <DataGridTextColumn Header="指令ID" IsReadOnly="True" Binding="{Binding CommandId}"></DataGridTextColumn>
-                    <DataGridTextColumn Header="指令内容" IsReadOnly="{Binding ContentEnable}" Binding="{Binding CommandContent,Mode=TwoWay,UpdateSourceTrigger=LostFocus}" Width="*">
+                    <DataGridTemplateColumn  Header="指令内容" Width="*">
+                        <DataGridTemplateColumn.CellEditingTemplateSelector>
+                            <StaticResource ResourceKey="CellTemplateSelector" />
+                        </DataGridTemplateColumn.CellEditingTemplateSelector>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding CommandContent}"></TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <!--<DataGridTextColumn Header="指令内容" IsReadOnly="{Binding ContentEnable}" Binding="{Binding CommandContent,Mode=TwoWay,UpdateSourceTrigger=LostFocus}" Width="*">
                         <DataGridTextColumn.CellStyle>
                             <Style TargetType="DataGridCell">
                                 <Setter Property="ToolTip" Value="{Binding CommandContent}" />
                             </Style>
                         </DataGridTextColumn.CellStyle>
-                    </DataGridTextColumn>
+                    </DataGridTextColumn>-->
                     <DataGridTextColumn Header="指令尾" IsReadOnly="True" Binding="{Binding CommandEnd}"></DataGridTextColumn>
                     <DataGridTextColumn Header="备注" IsReadOnly="True" Binding="{Binding Remark}"></DataGridTextColumn>
                     <DataGridTemplateColumn Header="操作" IsReadOnly="True" Width="150">

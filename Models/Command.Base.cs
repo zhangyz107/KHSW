@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Khsw.Instrument.Demo.Commons.Enums;
 
 namespace Khsw.Instrument.Demo.Models
 {
@@ -56,5 +52,15 @@ namespace Khsw.Instrument.Demo.Models
         /// 备注
         /// </summary>
         public string Remark { get; set; }
+
+        /// <summary>
+        /// 输入模式
+        /// </summary>
+        public InputModeEnum? InputMode { get; set; }
+
+        /// <summary>
+        /// 下拉数据源类型（应该用外键关联）
+        /// </summary>
+        public ComboboxDataSourceTypeEnum? ComboboxDataSourceType { get; set; }
     }
 }

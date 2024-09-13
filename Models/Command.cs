@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Khsw.Instrument.Demo.Models
 {
+    /// <summary>
+    /// 命令模型
+    /// </summary>
     public partial class Command
     {
     }

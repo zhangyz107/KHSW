@@ -145,7 +145,29 @@ namespace Khsw.Instrument.Demo.ViewModels
                 {
                     foreach (var command in commandList)
                     {
-                        CommandList.Add(_mapper.Map<CommandDataModel>(command));
+                        var dataModel = _mapper.Map<CommandDataModel>(command);
+                        if (dataModel != null)
+                        {
+                            if (dataModel.InputMode == Commons.Enums.InputModeEnum.Combobox)
+                            {
+                                switch (dataModel.ComboboxDataSourceType)
+                                {
+                                    case Commons.Enums.ComboboxDataSourceTypeEnum.SubcarrierSpacing:
+                                        dataModel.ComboboxDataSource = SubcarrierSpacingDic;
+                                        break;
+                                    case Commons.Enums.ComboboxDataSourceTypeEnum.CrcMode:
+                                        dataModel.ComboboxDataSource = CrcModeDic;
+                                        break;
+                                    case Commons.Enums.ComboboxDataSourceTypeEnum.LDPCRV:
+                                        dataModel.ComboboxDataSource = LDPCRVCDic;
+                                        break;
+                                    case Commons.Enums.ComboboxDataSourceTypeEnum.Modulation:
+                                        dataModel.ComboboxDataSource = ModulationModeDic;
+                                        break;
+                                }
+                            }
+                            CommandList.Add(dataModel);
+                        }
                     }
                 }
                 else
@@ -170,35 +192,47 @@ namespace Khsw.Instrument.Demo.ViewModels
             var command2 = GetLogicResetCommand(index++);
             CommandList.Add(command2);
 
-            var command3 = GetTBSizeCommand(index++);
+            var command3 = GetSubcarrierSpacingCommand(index++);
             CommandList.Add(command3);
 
-            var command4 = GetCbConfigurationCommand(index++);
+            var command4 = GetTBSizeCommand(index++);
             CommandList.Add(command4);
 
-            var command5 = GetFillIn0Command(index++);
+            var command5 = GetCrcModeCommand(index++);
             CommandList.Add(command5);
 
-            var command6 = GetLDPCEncodingConfigurationCommand(index++);
+            var command6 = GetCbConfigurationCommand(index++);
             CommandList.Add(command6);
 
-            var command7 = GetLDPCRateMatchingSettingsCommand(index++);
+            var command7 = GetFillIn0Command(index++);
             CommandList.Add(command7);
 
-            var command8 = GetInterweavingSettingsCommand(index++);
+            var command8 = GetLDPCEncodingConfigurationCommand(index++);
             CommandList.Add(command8);
 
-            var command9 = GetScramblingRandomSeedCommand(index++);
+            var command9 = GetLDPCRVCommand(index++);
             CommandList.Add(command9);
 
-            var command10 = GetFftLengthCommand(index++);
+            var command10 = GetLDPCRateMatchingSettingsCommand(index++);
             CommandList.Add(command10);
 
-            var command11 = GetDmrsSettingsCommand(index++);
+            var command11 = GetInterweavingSettingsCommand(index++);
             CommandList.Add(command11);
 
-            var command12 = GetCpSettingsCommand(index++);
+            var command12 = GetModulationModeCommand(index++);
             CommandList.Add(command12);
+
+            var command13 = GetScramblingRandomSeedCommand(index++);
+            CommandList.Add(command13);
+
+            var command14 = GetFftLengthCommand(index++);
+            CommandList.Add(command14);
+
+            var command15 = GetDmrsSettingsCommand(index++);
+            CommandList.Add(command15);
+
+            var command16 = GetCpSettingsCommand(index++);
+            CommandList.Add(command16);
         }
 
         private void ExecuteSendCommand(CommandDataModel model)
@@ -312,7 +346,8 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommandName = "启动信号",
                 CommandHead = _commandHead,
                 CommandEnd = _commandEnd,
-                CommandId = "0x0119"
+                CommandId = "0x0119",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
@@ -329,10 +364,46 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommandName = "逻辑复位",
                 CommandHead = _commandHead,
                 CommandEnd = _commandEnd,
-                CommandId = "0x0120"
+                CommandId = "0x0120",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
+
+        /// <summary>
+        /// 子载波间隔
+        /// </summary>
+        private CommandDataModel GetSubcarrierSpacingCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "子载波间隔",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                CommandId = "0x0121",
+                CommandContent = "0x00",
+                CommnadLength = 1,
+                InputMode = Commons.Enums.InputModeEnum.Combobox,
+                ComboboxDataSourceType = Commons.Enums.ComboboxDataSourceTypeEnum.SubcarrierSpacing,
+                ComboboxDataSource = SubcarrierSpacingDic
+
+            };
+            return command;
+        }
+
+        private Dictionary<string, string> SubcarrierSpacingDic { get; } = new Dictionary<string, string>()
+        {
+            {"0x00","15kHz" },
+            {"0x01","30kHz" },
+            {"0x02","60kHz" },
+            {"0x03","120kHz" },
+            {"0x04","240kHz" },
+            {"0x05","480kHz" },
+            {"0x06","960kHz" },
+        };
+
 
         /// <summary>
         /// TB大小
@@ -349,9 +420,40 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 4,
                 CommandId = "0x0122",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
+
+        /// <summary>
+        /// Crc模式
+        /// </summary>
+        private CommandDataModel GetCrcModeCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "Crc模式",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                CommandId = "0x0123",
+                CommandContent = "0x00",
+                CommnadLength = 1,
+                InputMode = Commons.Enums.InputModeEnum.Combobox,
+                ComboboxDataSourceType = Commons.Enums.ComboboxDataSourceTypeEnum.CrcMode,
+                ComboboxDataSource = CrcModeDic
+            };
+            return command;
+        }
+
+        private Dictionary<string, string> CrcModeDic { get; } = new Dictionary<string, string>()
+        {
+            {"0x00","CRC24A" },
+            {"0x01","CRC24B" },
+            {"0x02","CRC24C" },
+            {"0x03","CRC16" }
+        };
 
         /// <summary>
         /// Cb配置
@@ -368,6 +470,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 4,
                 CommandId = "0x0124",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
@@ -388,6 +491,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 2,
                 CommandId = "0x0125",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
@@ -407,9 +511,40 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 2,
                 CommandId = "0x0126",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
+
+        /// <summary>
+        /// LDPCR VC
+        /// </summary>
+        private CommandDataModel GetLDPCRVCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "LDPCR VC",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                CommandId = "0x0127",
+                CommandContent = "0x00",
+                CommnadLength = 1,
+                InputMode = Commons.Enums.InputModeEnum.Combobox,
+                ComboboxDataSourceType = Commons.Enums.ComboboxDataSourceTypeEnum.LDPCRV,
+                ComboboxDataSource = LDPCRVCDic
+            };
+            return command;
+        }
+
+        private Dictionary<string, string> LDPCRVCDic { get; } = new Dictionary<string, string>()
+        {
+            {"0x00","RV0" },
+            {"0x01","RV1" },
+            {"0x02","RV2" },
+            {"0x03","RV3" }
+        };
 
         /// <summary>
         /// LDPC速率匹配设置
@@ -426,6 +561,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 4,
                 CommandId = "0x0128",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
@@ -445,9 +581,43 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 4,
                 CommandId = "0x0129",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
+
+        /// <summary>
+        /// 调制方式
+        /// </summary>
+        private CommandDataModel GetModulationModeCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "调制方式",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                CommandId = "0x012a",
+                CommandContent = "0x00",
+                CommnadLength = 1,
+                InputMode = Commons.Enums.InputModeEnum.Combobox,
+                ComboboxDataSourceType = Commons.Enums.ComboboxDataSourceTypeEnum.Modulation,
+                ComboboxDataSource = ModulationModeDic
+            };
+            return command;
+        }
+
+        private Dictionary<string, string> ModulationModeDic { get; } = new Dictionary<string, string>()
+        {
+            {"0x00","Pi/2-BPSK" },
+            {"0x01","BPSK" },
+            {"0x02","QPSK" },
+            {"0x03","16QAM" },
+            {"0x04","64QAM" },
+            {"0x05","256QAM" },
+            {"0x06","1024QAM" }
+        };
 
         /// <summary>
         /// 扰码随机种子
@@ -464,6 +634,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 8,
                 CommandId = "0x012b",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
@@ -483,6 +654,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 2,
                 CommandId = "0x012c",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
@@ -502,6 +674,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 25,
                 CommandId = "0x012d",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
@@ -521,6 +694,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 20,
                 CommandId = "0x012e",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
