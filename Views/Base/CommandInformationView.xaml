@@ -15,7 +15,7 @@
         </ContextMenu>
     </UserControl.Resources>
 
-    <GroupBox Grid.Column="2" Header="指令信息" >
+    <GroupBox Grid.Column="2" Header="打印信息" >
         <ListBox ScrollViewer.VerticalScrollBarVisibility="Visible" ItemsSource="{Binding LogInfos}" ScrollViewer.HorizontalScrollBarVisibility="Auto" ContextMenu="{StaticResource ContextMenu}">
             <ListBox.ItemTemplate>
                 <DataTemplate>

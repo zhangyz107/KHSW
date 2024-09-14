@@ -6,6 +6,7 @@ using Khsw.Instrument.Demo.Infrastructures;
 using Khsw.Instrument.Demo.Models;
 using Khsw.Instrument.Demo.Models.Base;
 using Khsw.Instrument.Demo.Views.Base;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
@@ -249,6 +250,9 @@ namespace Khsw.Instrument.Demo.ViewModels
             var command17 = GetPdschFormCommand(index++);
             commandList.Add(command17);
 
+            var command18 = GetDmrsFormCommand(index++);
+            commandList.Add(command18);
+
             return commandList;
         }
 
@@ -258,15 +262,35 @@ namespace Khsw.Instrument.Demo.ViewModels
             var length = BitConverter.GetBytes(model.CommnadLength);
             var id = model.CommandId.ToByteArray();
             var data = string.IsNullOrEmpty(model.CommandContent) ? null : model.CommandContent.ToByteArray();
-            var command = GetCommand(length, id, data);
+            var commandList = new List<byte[]>();
+            if (data == null)
+                //todo:记录日志 
+                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message=没有可以发送的命令！"));
+
+            if (data.Length > _sendByteMax)
+            {
+                var span = data.AsSpan();
+                var count = data.Length % _sendByteMax != 0 ? data.Length / _sendByteMax + 1 : data.Length / _sendByteMax;
+                for (var i = 0; i < count; i++)
+                {
+                    var tempData = i == count - 1 ? span.Slice(i * _sendByteMax) : span.Slice(i * _sendByteMax, _sendByteMax);
+                    var tempLength = BitConverter.GetBytes(tempData.Length);
+                    commandList.Add(GetCommand(tempLength, id, tempData.ToArray()));
+                }
+            }
+            else
+                commandList.Add(GetCommand(length, id, data));
 #if SIMULATION
             try
             {
-                ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
+                foreach (var command in commandList)
                 {
-                    RecordTime = DateTime.Now,
-                    RecordMessage = $"发送消息:{command.ToAppendString()}"
-                });
+                    ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
+                    {
+                        RecordTime = DateTime.Now,
+                        RecordMessage = $"发送消息:{command?.ToAppendString()}"
+                    });
+                }
             }
             catch (Exception e)
             {
@@ -312,7 +336,10 @@ namespace Khsw.Instrument.Demo.ViewModels
                     return;
                 }
 
-                _connectedInstrument.Send(command);
+                foreach (var command in commandList)
+                {
+                    _connectedInstrument.Send(command);
+                }
             }
             catch (Exception e)
             {
@@ -360,30 +387,56 @@ namespace Khsw.Instrument.Demo.ViewModels
         {
             var charLength = model.CommnadLength * 2;
             var content = new StringBuilder();
-            var filePath = Path.Combine("C:\\Users\\zhang\\Documents\\WeChat Files\\zhangyz107\\FileStorage\\File\\2024-09", "pdsch_grid.txt");
-            FileReadHelper.ReadFileByLines(filePath, (rowContent) =>
+            var openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Text files (*.txt)|*.txt";
+            bool? result = openFileDialog.ShowDialog();
+            // 检查用户是否选择了文件
+            if (result == true)
             {
-                var lastLength = charLength - content.Length;
-                var result = true;
-                if (lastLength >= rowContent.Length)
-                {
-                    content.Append(rowContent);
-                }
-                else if (lastLength < rowContent.Length)
-                {
-                    content.Append(rowContent.Take(lastLength));
-                    result = false;
-                }
-                return result;
-            });
+                // 获取用户选择的文件路径
+                string filePath = openFileDialog.FileName;
 
-            model.CommandContent = $"0x{content.ToString()}";
+                try
+                {
+                    // 读取文件内容
+                    FileReadHelper.ReadFileByLines(filePath, (rowContent) =>
+                    {
+                        var lastLength = charLength - content.Length;
+                        var result = true;
+                        if (lastLength >= rowContent.Length)
+                        {
+                            content.Append(rowContent);
+                        }
+                        else if (lastLength < rowContent.Length)
+                        {
+                            content.Append(rowContent.Take(lastLength));
+                            result = false;
+                        }
+                        return result;
+                    });
+
+                    model.CommandContent = $"0x{content.ToString()}";
+
+                    ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
+                    {
+                        RecordTime = DateTime.Now,
+                        RecordMessage = $"导入数据成功！"
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"读取文件时出错：{ex.Message}");
+                }
+            }
         }
 
         private void ExecuteViewDetailCommand(CommandDataModel model)
         {
-            //todo:记录日志 
-            _dialogService.ShowDialog("ViewDataDetailView", new DialogParameters($"commandContent={model.CommandContent}"));
+            if (string.IsNullOrEmpty(model.CommandContent))
+                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message=无法查看空的数据详情"));
+            else
+                //todo:记录日志 
+                _dialogService.ShowDialog("ViewDataDetailView", new DialogParameters($"commandContent={model.CommandContent}"));
         }
 
         #region 遥测指令
@@ -771,6 +824,26 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = false,
                 CommnadLength = 1792 * 4,
                 CommandId = "0x012f",
+                InputMode = Commons.Enums.InputModeEnum.Dialog
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// Dmrs表格
+        /// </summary>
+        private CommandDataModel GetDmrsFormCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "Dmrs表格",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = false,
+                CommnadLength = 1792 * 4,
+                CommandId = "0x0135",
                 InputMode = Commons.Enums.InputModeEnum.Dialog
             };
             return command;
