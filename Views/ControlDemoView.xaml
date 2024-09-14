@@ -19,8 +19,12 @@
     </i:Interaction.Triggers>
 
     <UserControl.Resources>
+        <DataTemplate x:Key="TextBlockTemplate">
+            <TextBlock Text="{Binding CommandContent}"/>
+        </DataTemplate>
+
         <DataTemplate x:Key="TextBoxTemplate">
-            <TextBox Text="{Binding CommandContent,Mode=TwoWay,UpdateSourceTrigger=LostFocus}" />
+            <TextBox Text="{Binding CommandContent,Mode=TwoWay,UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding ContentEnable}"/>
         </DataTemplate>
 
         <DataTemplate x:Key="ComboBoxTemplate">
@@ -28,13 +32,24 @@
         </DataTemplate>
 
         <DataTemplate x:Key="ButtonTemplate">
-            <Button Content="Click me" Command="{Binding}" />
+            <Grid HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"></ColumnDefinition>
+                    <ColumnDefinition Width="auto"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Button Content="导入数据" MaxWidth="100" MinWidth="100" Command="{Binding DataContext.ImportDataCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type UserControl}}}"  CommandParameter="{Binding }" Style="{StaticResource MaterialDesignFlatDarkButton}"/>
+                <Button Margin="8,0" Grid.Column="1" Content="数据详情" MaxWidth="100" MinWidth="100" Command="{Binding DataContext.ViewDetailCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type UserControl}}}" CommandParameter="{Binding }" Style="{StaticResource MaterialDesignFlatDarkButton}" />
+            </Grid>
         </DataTemplate>
 
         <local:ControlDemoViewSelector x:Key="CellTemplateSelector"
-                               TextBoxTemplate="{StaticResource TextBoxTemplate}"
-                               ComboBoxTemplate="{StaticResource ComboBoxTemplate}"
+                               TextBlockTemplate="{StaticResource TextBlockTemplate}"
                                ButtonTemplate="{StaticResource ButtonTemplate}" />
+
+        <local:ControlDemoViewEditingSelector x:Key="CellTemplateEditingSelector"
+                               TextBoxTemplate="{StaticResource TextBoxTemplate}"
+                               ComboBoxTemplate="{StaticResource ComboBoxTemplate}" />
+
     </UserControl.Resources>
 
     <Grid>
@@ -55,30 +70,21 @@
             <ContentControl prism:RegionManager.RegionName="{Binding InstrumentManangeRegionName}" Margin="5"/>
 
             <Label Content="遥测指令" Grid.Row="1"></Label>
-            <DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" ItemsSource="{Binding CommandList}" ScrollViewer.HorizontalScrollBarVisibility="Visible">
+            <DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" ItemsSource="{Binding CommandList}" ScrollViewer.HorizontalScrollBarVisibility="Visible" BeginningEdit="DataGrid_BeginningEdit">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="序号" IsReadOnly="True" Binding="{Binding Index}"></DataGridTextColumn>
                     <DataGridTextColumn Header="指令名称" IsReadOnly="True" Binding="{Binding CommandName}"></DataGridTextColumn>
                     <DataGridTextColumn Header="指令头" IsReadOnly="True" Binding="{Binding CommandHead}"></DataGridTextColumn>
                     <DataGridTextColumn Header="指令长" IsReadOnly="True" Binding="{Binding CommnadLength,StringFormat=0x{0:X}}"></DataGridTextColumn>
                     <DataGridTextColumn Header="指令ID" IsReadOnly="True" Binding="{Binding CommandId}"></DataGridTextColumn>
-                    <DataGridTemplateColumn  Header="指令内容" Width="*">
+                    <DataGridTemplateColumn  Header="指令内容" Width="*" IsReadOnly="{Binding IsReadOnly,Mode=OneWay}">
                         <DataGridTemplateColumn.CellEditingTemplateSelector>
-                            <StaticResource ResourceKey="CellTemplateSelector" />
+                            <StaticResource ResourceKey="CellTemplateEditingSelector" />
                         </DataGridTemplateColumn.CellEditingTemplateSelector>
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding CommandContent}"></TextBlock>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellTemplateSelector>
+                            <StaticResource ResourceKey="CellTemplateSelector" />
+                        </DataGridTemplateColumn.CellTemplateSelector>
                     </DataGridTemplateColumn>
-                    <!--<DataGridTextColumn Header="指令内容" IsReadOnly="{Binding ContentEnable}" Binding="{Binding CommandContent,Mode=TwoWay,UpdateSourceTrigger=LostFocus}" Width="*">
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell">
-                                <Setter Property="ToolTip" Value="{Binding CommandContent}" />
-                            </Style>
-                        </DataGridTextColumn.CellStyle>
-                    </DataGridTextColumn>-->
                     <DataGridTextColumn Header="指令尾" IsReadOnly="True" Binding="{Binding CommandEnd}"></DataGridTextColumn>
                     <DataGridTextColumn Header="备注" IsReadOnly="True" Binding="{Binding Remark}"></DataGridTextColumn>
                     <DataGridTemplateColumn Header="操作" IsReadOnly="True" Width="150">

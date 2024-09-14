@@ -6,8 +6,10 @@ using Khsw.Instrument.Demo.Infrastructures;
 using Khsw.Instrument.Demo.Models;
 using Khsw.Instrument.Demo.Models.Base;
 using Khsw.Instrument.Demo.Views.Base;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text;
 
 namespace Khsw.Instrument.Demo.ViewModels
 {
@@ -25,6 +27,7 @@ namespace Khsw.Instrument.Demo.ViewModels
         private readonly string _commandListFileName = $"{nameof(ControlDemoViewModel)}CommandList.xml";
         //private readonly string _commandListFileName = $"{nameof(ControlDemoViewModel)}CommandList.xml";
         private readonly int _defaultLength = 5;
+        private readonly int _sendByteMax = 1024;
         private object _commandInformationView;
         private int _boardID;
         private InstrumentBase _instrument;
@@ -66,7 +69,13 @@ namespace Khsw.Instrument.Demo.ViewModels
         public DelegateCommand<CommandDataModel> SendCommand =>
             _sendCommand ?? (_sendCommand = new DelegateCommand<CommandDataModel>(ExecuteSendCommand));
 
+        private DelegateCommand<CommandDataModel> _importDataCommand;
+        public DelegateCommand<CommandDataModel> ImportDataCommand =>
+            _importDataCommand ?? (_importDataCommand = new DelegateCommand<CommandDataModel>(ExecuteImportDataCommand));
 
+        private DelegateCommand<CommandDataModel> _viewDetailCommand;
+        public DelegateCommand<CommandDataModel> ViewDetailCommand =>
+            _viewDetailCommand ?? (_viewDetailCommand = new DelegateCommand<CommandDataModel>(ExecuteViewDetailCommand));
         #endregion
 
 
@@ -136,6 +145,8 @@ namespace Khsw.Instrument.Demo.ViewModels
 
         private void LoadCommandList()
         {
+            var initialCommandList = InitCommandList();
+            var loadCommandList = new List<CommandDataModel>();
             var dir = AppDomain.CurrentDomain.BaseDirectory;
             var filePath = Path.Combine(dir, _commandListFileName);
             if (File.Exists(filePath))
@@ -167,73 +178,82 @@ namespace Khsw.Instrument.Demo.ViewModels
                                         break;
                                 }
                             }
-                            CommandList.Add(dataModel);
+                            loadCommandList.Add(dataModel);
                         }
                     }
                 }
-                else
-                {
-                    InitCommandList();
-                }
-            }
-            else
-            {
-                InitCommandList();
             }
 
+            var joinedCommandIndex = loadCommandList.Select(x => x.Index);
+            var toAddCommand = initialCommandList.Where(x => !joinedCommandIndex.Contains(x.Index));
+            foreach (var command in toAddCommand)
+                loadCommandList.Add(command);
+
+            var orderCommandList = loadCommandList.OrderBy(x => x.Index);
+
+            foreach (var command in orderCommandList)
+                CommandList.Add(command);
         }
 
-        private void InitCommandList()
+        private List<CommandDataModel> InitCommandList()
         {
             var index = 1;
-
+            var commandList = new List<CommandDataModel>();
             var command1 = GetStartSignalCommand(index++);
-            CommandList.Add(command1);
+            commandList.Add(command1);
 
             var command2 = GetLogicResetCommand(index++);
-            CommandList.Add(command2);
+            commandList.Add(command2);
 
             var command3 = GetSubcarrierSpacingCommand(index++);
-            CommandList.Add(command3);
+            commandList.Add(command3);
 
             var command4 = GetTBSizeCommand(index++);
-            CommandList.Add(command4);
+            commandList.Add(command4);
 
             var command5 = GetCrcModeCommand(index++);
-            CommandList.Add(command5);
+            commandList.Add(command5);
 
             var command6 = GetCbConfigurationCommand(index++);
-            CommandList.Add(command6);
+            commandList.Add(command6);
 
             var command7 = GetFillIn0Command(index++);
-            CommandList.Add(command7);
+            commandList.Add(command7);
 
             var command8 = GetLDPCEncodingConfigurationCommand(index++);
-            CommandList.Add(command8);
+            commandList.Add(command8);
 
             var command9 = GetLDPCRVCommand(index++);
-            CommandList.Add(command9);
+            commandList.Add(command9);
 
             var command10 = GetLDPCRateMatchingSettingsCommand(index++);
-            CommandList.Add(command10);
+            commandList.Add(command10);
 
             var command11 = GetInterweavingSettingsCommand(index++);
-            CommandList.Add(command11);
+            commandList.Add(command11);
 
             var command12 = GetModulationModeCommand(index++);
-            CommandList.Add(command12);
+            commandList.Add(command12);
 
             var command13 = GetScramblingRandomSeedCommand(index++);
-            CommandList.Add(command13);
+            commandList.Add(command13);
 
             var command14 = GetFftLengthCommand(index++);
-            CommandList.Add(command14);
+            commandList.Add(command14);
 
             var command15 = GetDmrsSettingsCommand(index++);
-            CommandList.Add(command15);
+            commandList.Add(command15);
 
             var command16 = GetCpSettingsCommand(index++);
-            CommandList.Add(command16);
+            commandList.Add(command16);
+
+            var command17 = GetPdschFormCommand(index++);
+            commandList.Add(command17);
+
+            var command18 = GetDmrsFormCommand(index++);
+            commandList.Add(command18);
+
+            return commandList;
         }
 
         private void ExecuteSendCommand(CommandDataModel model)
@@ -242,15 +262,35 @@ namespace Khsw.Instrument.Demo.ViewModels
             var length = BitConverter.GetBytes(model.CommnadLength);
             var id = model.CommandId.ToByteArray();
             var data = string.IsNullOrEmpty(model.CommandContent) ? null : model.CommandContent.ToByteArray();
-            var command = GetCommand(length, id, data);
+            var commandList = new List<byte[]>();
+            if (data == null)
+                //todo:记录日志 
+                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message=没有可以发送的命令！"));
+
+            if (data.Length > _sendByteMax)
+            {
+                var span = data.AsSpan();
+                var count = data.Length % _sendByteMax != 0 ? data.Length / _sendByteMax + 1 : data.Length / _sendByteMax;
+                for (var i = 0; i < count; i++)
+                {
+                    var tempData = i == count - 1 ? span.Slice(i * _sendByteMax) : span.Slice(i * _sendByteMax, _sendByteMax);
+                    var tempLength = BitConverter.GetBytes(tempData.Length);
+                    commandList.Add(GetCommand(tempLength, id, tempData.ToArray()));
+                }
+            }
+            else
+                commandList.Add(GetCommand(length, id, data));
 #if SIMULATION
             try
             {
-                ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
+                foreach (var command in commandList)
                 {
-                    RecordTime = DateTime.Now,
-                    RecordMessage = $"发送消息:{command.ToAppendString()}"
-                });
+                    ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
+                    {
+                        RecordTime = DateTime.Now,
+                        RecordMessage = $"发送消息:{command?.ToAppendString()}"
+                    });
+                }
             }
             catch (Exception e)
             {
@@ -296,7 +336,10 @@ namespace Khsw.Instrument.Demo.ViewModels
                     return;
                 }
 
-                _connectedInstrument.Send(command);
+                foreach (var command in commandList)
+                {
+                    _connectedInstrument.Send(command);
+                }
             }
             catch (Exception e)
             {
@@ -338,6 +381,62 @@ namespace Khsw.Instrument.Demo.ViewModels
             Buffer.BlockCopy(CommandEndByte, 0, cmd, pos, CommandEndByte.Length);
 
             return cmd;
+        }
+
+        private void ExecuteImportDataCommand(CommandDataModel model)
+        {
+            var charLength = model.CommnadLength * 2;
+            var content = new StringBuilder();
+            var openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Text files (*.txt)|*.txt";
+            bool? result = openFileDialog.ShowDialog();
+            // 检查用户是否选择了文件
+            if (result == true)
+            {
+                // 获取用户选择的文件路径
+                string filePath = openFileDialog.FileName;
+
+                try
+                {
+                    // 读取文件内容
+                    FileReadHelper.ReadFileByLines(filePath, (rowContent) =>
+                    {
+                        var lastLength = charLength - content.Length;
+                        var result = true;
+                        if (lastLength >= rowContent.Length)
+                        {
+                            content.Append(rowContent);
+                        }
+                        else if (lastLength < rowContent.Length)
+                        {
+                            content.Append(rowContent.Take(lastLength));
+                            result = false;
+                        }
+                        return result;
+                    });
+
+                    model.CommandContent = $"0x{content.ToString()}";
+
+                    ((CommandInformationView)_commandInformationView)?.AppendWriteLine(new RecordMessageDataModel()
+                    {
+                        RecordTime = DateTime.Now,
+                        RecordMessage = $"导入数据成功！"
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"读取文件时出错：{ex.Message}");
+                }
+            }
+        }
+
+        private void ExecuteViewDetailCommand(CommandDataModel model)
+        {
+            if (string.IsNullOrEmpty(model.CommandContent))
+                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message=无法查看空的数据详情"));
+            else
+                //todo:记录日志 
+                _dialogService.ShowDialog("ViewDataDetailView", new DialogParameters($"commandContent={model.CommandContent}"));
         }
 
         #region 遥测指令
@@ -392,6 +491,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommandId = "0x0121",
                 CommandContent = "0x00",
                 CommnadLength = 1,
+                ContentEnable = true,
                 InputMode = Commons.Enums.InputModeEnum.Combobox,
                 ComboboxDataSourceType = Commons.Enums.ComboboxDataSourceTypeEnum.SubcarrierSpacing,
                 ComboboxDataSource = SubcarrierSpacingDic
@@ -447,6 +547,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommandId = "0x0123",
                 CommandContent = "0x00",
                 CommnadLength = 1,
+                ContentEnable = true,
                 InputMode = Commons.Enums.InputModeEnum.Combobox,
                 ComboboxDataSourceType = Commons.Enums.ComboboxDataSourceTypeEnum.CrcMode,
                 ComboboxDataSource = CrcModeDic
@@ -538,6 +639,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommandId = "0x0127",
                 CommandContent = "0x00",
                 CommnadLength = 1,
+                ContentEnable = true,
                 InputMode = Commons.Enums.InputModeEnum.Combobox,
                 ComboboxDataSourceType = Commons.Enums.ComboboxDataSourceTypeEnum.LDPCRV,
                 ComboboxDataSource = LDPCRVCDic
@@ -608,6 +710,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommandId = "0x012a",
                 CommandContent = "0x00",
                 CommnadLength = 1,
+                ContentEnable = true,
                 InputMode = Commons.Enums.InputModeEnum.Combobox,
                 ComboboxDataSourceType = Commons.Enums.ComboboxDataSourceTypeEnum.Modulation,
                 ComboboxDataSource = ModulationModeDic
@@ -702,6 +805,46 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommnadLength = 20,
                 CommandId = "0x012e",
                 InputMode = Commons.Enums.InputModeEnum.Direct
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// Pdsch表格
+        /// </summary>
+        private CommandDataModel GetPdschFormCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "Pdsch表格",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = false,
+                CommnadLength = 1792 * 4,
+                CommandId = "0x012f",
+                InputMode = Commons.Enums.InputModeEnum.Dialog
+            };
+            return command;
+        }
+
+        /// <summary>
+        /// Dmrs表格
+        /// </summary>
+        private CommandDataModel GetDmrsFormCommand(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "Dmrs表格",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = false,
+                CommnadLength = 1792 * 4,
+                CommandId = "0x0135",
+                InputMode = Commons.Enums.InputModeEnum.Dialog
             };
             return command;
         }

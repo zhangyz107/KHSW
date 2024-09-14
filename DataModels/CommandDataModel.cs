@@ -107,6 +107,8 @@ namespace Khsw.Instrument.Demo.DataModels
             set => SetProperty(ref _contentEnable, value);
         }
 
+        public bool IsReadOnly { get => !ContentEnable; }
+
         /// <summary>
         /// 备注
         /// </summary>
