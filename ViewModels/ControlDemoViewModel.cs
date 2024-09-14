@@ -258,23 +258,20 @@ namespace Khsw.Instrument.Demo.ViewModels
 
         private void ExecuteSendCommand(CommandDataModel model)
         {
-
-            var length = BitConverter.GetBytes(model.CommnadLength);
+            //长度反序（大端字节序）
+            var length = BitConverter.GetBytes(model.CommnadLength).Reverse().ToArray();
             var id = model.CommandId.ToByteArray();
             var data = string.IsNullOrEmpty(model.CommandContent) ? null : model.CommandContent.ToByteArray();
             var commandList = new List<byte[]>();
-            if (data == null)
-                //todo:记录日志 
-                _dialogService.ShowDialog("AlertDialog", new DialogParameters($"message=没有可以发送的命令！"));
 
-            if (data.Length > _sendByteMax)
+            if (data != null && data.Length > _sendByteMax)
             {
                 var span = data.AsSpan();
                 var count = data.Length % _sendByteMax != 0 ? data.Length / _sendByteMax + 1 : data.Length / _sendByteMax;
                 for (var i = 0; i < count; i++)
                 {
                     var tempData = i == count - 1 ? span.Slice(i * _sendByteMax) : span.Slice(i * _sendByteMax, _sendByteMax);
-                    var tempLength = BitConverter.GetBytes(tempData.Length);
+                    var tempLength = BitConverter.GetBytes((short)tempData.Length).Reverse().ToArray();
                     commandList.Add(GetCommand(tempLength, id, tempData.ToArray()));
                 }
             }
