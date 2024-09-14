@@ -360,12 +360,14 @@ namespace Khsw.Instrument.Demo.ViewModels
             Buffer.BlockCopy(CommandHeadByte, 0, cmd, pos, CommandHeadByte.Length);
             pos = pos + CommandHeadByte.Length;
 
+            //Board ID
+            cmd[pos++] = (byte)BoardID;
+
+            //指令长度
             Buffer.BlockCopy(length, 0, cmd, pos, length.Length);
             pos = pos + length.Length;
 
-            cmd[pos++] = (byte)BoardID;
-
-
+            //指令ID
             Buffer.BlockCopy(cmdID, 0, cmd, pos, cmdID.Length);
             pos += cmdID.Length;
 
