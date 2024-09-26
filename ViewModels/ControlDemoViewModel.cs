@@ -786,7 +786,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommandHead = _commandHead,
                 CommandEnd = _commandEnd,
                 ContentEnable = true,
-                CommnadLength = 25,
+                CommnadLength = 482,
                 CommandId = "0x012d",
                 InputMode = Commons.Enums.InputModeEnum.Dialog
             };
