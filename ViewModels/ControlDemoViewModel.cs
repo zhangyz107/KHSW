@@ -7,6 +7,7 @@ using Khsw.Instrument.Demo.Models;
 using Khsw.Instrument.Demo.Models.Base;
 using Khsw.Instrument.Demo.Views.Base;
 using Microsoft.Win32;
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
@@ -253,8 +254,12 @@ namespace Khsw.Instrument.Demo.ViewModels
             var command18 = GetDmrsFormCommand(index++);
             commandList.Add(command18);
 
+            var command19 = GetRBSelect(index++);
+            commandList.Add(command19);
+
             return commandList;
         }
+
 
         private void ExecuteSendCommand(CommandDataModel model)
         {
@@ -783,7 +788,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 ContentEnable = true,
                 CommnadLength = 25,
                 CommandId = "0x012d",
-                InputMode = Commons.Enums.InputModeEnum.Direct
+                InputMode = Commons.Enums.InputModeEnum.Dialog
             };
             return command;
         }
@@ -844,6 +849,27 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommnadLength = 1792 * 4,
                 CommandId = "0x0136",
                 InputMode = Commons.Enums.InputModeEnum.Dialog
+            };
+            return command;
+        }
+
+
+        /// <summary>
+        /// RB选择
+        /// </summary>
+        private CommandDataModel GetRBSelect(int index)
+        {
+            var command = new CommandDataModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Index = index,
+                CommandName = "RB选择",
+                CommandHead = _commandHead,
+                CommandEnd = _commandEnd,
+                ContentEnable = false,
+                CommnadLength = 4,
+                CommandId = "0x013d",
+                InputMode = Commons.Enums.InputModeEnum.Direct
             };
             return command;
         }
