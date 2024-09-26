@@ -785,7 +785,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommandName = "Dmrs设置",
                 CommandHead = _commandHead,
                 CommandEnd = _commandEnd,
-                ContentEnable = true,
+                ContentEnable = false,
                 CommnadLength = 482,
                 CommandId = "0x012d",
                 InputMode = Commons.Enums.InputModeEnum.Dialog
@@ -866,7 +866,7 @@ namespace Khsw.Instrument.Demo.ViewModels
                 CommandName = "RB选择",
                 CommandHead = _commandHead,
                 CommandEnd = _commandEnd,
-                ContentEnable = false,
+                ContentEnable = true,
                 CommnadLength = 4,
                 CommandId = "0x013d",
                 InputMode = Commons.Enums.InputModeEnum.Direct
