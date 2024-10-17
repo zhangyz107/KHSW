@@ -6,11 +6,14 @@ using Khsw.Instrument.Demo.Infrastructures;
 using Khsw.Instrument.Demo.Models;
 using Khsw.Instrument.Demo.Models.Base;
 using Khsw.Instrument.Demo.Views.Base;
+using Khsw.Instrument.Demo.Views.Dialogs;
 using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Windows;
 
 namespace Khsw.Instrument.Demo.ViewModels
 {
@@ -94,10 +97,14 @@ namespace Khsw.Instrument.Demo.ViewModels
             _mapper = mapper;
         }
 
-        private void ExecuteLoadingCommand()
+        private async void ExecuteLoadingCommand()
         {
             //初始化设备信息
             _instrument = InitInstrumentInfo();
+
+            //todo:记录日志 
+            //var tempParams = ProcessBarHelper.CreateProcessBarParameters(DoWork, false);
+            //_dialogService.ShowProcessBarDialog(tempParams);
 
             //初始化指令
             LoadCommandList();
@@ -119,6 +126,17 @@ namespace Khsw.Instrument.Demo.ViewModels
             if (_commandInformationView == null)
                 CommandInformationView = _container.Resolve<CommandInformationView>();
             #endregion
+        }
+
+        private async Task DoWork(Action<double, string> updateProgress)
+        {
+            int length = 100;
+            for (int i = 0; i < length; i++)
+            {
+                if (updateProgress != null)
+                    updateProgress(i + 1, $"当前进度：{i + 1}%");
+                await Task.Delay(100);
+            }
         }
 
         internal void SaveData()
